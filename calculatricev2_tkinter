@@ -6,7 +6,7 @@ COLORS = {
     "light_gray": "#D4D4D2",
     "black": "#1C1C1C",
     "dark_gray": "#505050",
-    "orange": "#FF9500",
+    "blue": "#043A5C",
     "white": "white",
     "display_gray": "#888888"
 }
@@ -85,7 +85,7 @@ class Calculator:
                 if value in SPECIAL_FUNCTIONS:
                     button.config(foreground=COLORS["black"], background=COLORS["light_gray"])
                 elif value in OPERATORS or value == "=":
-                    button.config(foreground=COLORS["white"], background=COLORS["orange"])
+                    button.config(foreground=COLORS["white"], background=COLORS["blue"])
                 else:
                     button.config(foreground=COLORS["white"], background=COLORS["dark_gray"])
                 
