@@ -7,7 +7,7 @@ COLORS = {
     "black": "#1C1C1C",
     "dark_gray": "#505050",
     "blue": "#043A5C",
-    "white": "white",
+    "white": "#FFFFFF",
     "display_gray": "#888888"
 }
 
