@@ -11,14 +11,19 @@ def tokenize(expression):
     # Convert the input string into a list of numbers and operators
     tokens = []
     number = ""
+    prev_char = None
 
     for char in expression:
         # Build multi-digit (or decimal) numbers
         if char.isdigit() or char == ".":
             number += char
 
+        # Handle negative numbers (unary minus)
+        elif char == "-" and (prev_char is None or prev_char in "+-*/("):
+            number += char
+
         # Handle operators and parentheses
-        elif char in "+-*/()":
+        elif char in "+*/()":
             if number != "":
                 tokens.append(float(number))
                 number = ""
@@ -26,11 +31,13 @@ def tokenize(expression):
 
         # Ignore spaces
         elif char == " ":
-            continue
+            pass
 
         # Invalid character
         else:
             raise ValueError(f"Invalid character: {char}")
+
+        prev_char = char
 
     # Append the last number if it exists
     if number != "":
@@ -119,7 +126,12 @@ def calculator():
         tokens = tokenize(expression)
         postfix = infix_to_postfix(tokens)
         result = evaluate_postfix(postfix)
-        print("Result:", result)
+
+        # Display result without .0 if it is an integer
+        if result.is_integer():
+            print("Result:", int(result))
+        else:
+            print("Result:", result)
 
     except Exception as error:
         print("Error:", error)
