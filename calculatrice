@@ -17,8 +17,8 @@ class Calculatrice:
         return a / b
     
     def evaluer(self, expression):
-        """Évalue une expression mathématique en respectant les priorités"""
-        # Nettoyer l'expression
+        """respectant les priorités"""
+        
         expression = expression.replace(" ", "")
         
         # Gérer les parenthèses en premier
@@ -29,13 +29,12 @@ class Calculatrice:
         return self._evaluer_sans_parentheses(expression)
     
     def _traiter_parentheses(self, expression):
-        """Trouve et évalue la première parenthèse la plus interne"""
-        # Trouver la dernière parenthèse ouvrante
+       
         debut = expression.rfind("(")
         if debut == -1:
             return expression
         
-        # Trouver la parenthèse fermante correspondante
+       
         fin = expression.find(")", debut)
         if fin == -1:
             raise ValueError("Parenthèses non équilibrées")
@@ -112,7 +111,7 @@ class Calculatrice:
 if __name__ == "__main__":
     calc = Calculatrice()
     
-    # Tests
+   
     expressions = [
         "2 + 3 * 4",           # 14 (pas 20)
         "10 - 2 * 3",          # 4 (pas 24)
