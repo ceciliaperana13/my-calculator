@@ -13,11 +13,11 @@ COLORS = {
 
 # Configuration des boutons
 BUTTON_LAYOUT = [
-    ["AC", "+/-", "%", "÷"], 
-    ["7", "8", "9", "×"], 
-    ["4", "5", "6", "-"],
-    ["1", "2", "3", "+"],
-    ["0", ".", "√", "="]
+    ["AC","()", "+/-", "%", "÷"], 
+    ["","7", "8", "9", "×"], 
+    ["","4", "5", "6", "-"],
+    ["","1", "2", "3", "+"],
+    ["","0", ".", "√", "="]
 ]
 
 OPERATORS = {"+", "-", "×", "÷"}
@@ -200,6 +200,7 @@ class Calculator:
                 current_text = self.display_label.cget("text")
                 if "." not in current_text:
                     self.display_label.config(text=current_text + ".")
+            #case parenthese can be added here in future        
             
             case "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9":
                 current_text = self.display_label.cget("text")
