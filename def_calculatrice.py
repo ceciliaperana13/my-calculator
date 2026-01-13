@@ -37,3 +37,92 @@ def tokenize(expression):
         tokens.append(float(number))
 
     return tokens
+
+
+def infix_to_postfix(tokens):
+    # Convert infix expression to postfix (Reverse Polish Notation)
+    output = []
+    stack = []
+
+    for token in tokens:
+        # If token is a number, add it to the output
+        if isinstance(token, float):
+            output.append(token)
+
+        # If token is an operator
+        elif token in "+-*/":
+            while (stack and stack[-1] != "(" and
+                   priority(stack[-1]) >= priority(token)):
+                output.append(stack.pop())
+            stack.append(token)
+
+        # If token is an opening parenthesis
+        elif token == "(":
+            stack.append(token)
+
+        # If token is a closing parenthesis
+        elif token == ")":
+            while stack and stack[-1] != "(":
+                output.append(stack.pop())
+            if not stack:
+                raise ValueError("Closing parenthesis without opening one.")
+            stack.pop()  # Remove "(" from stack
+
+    # Pop remaining operators from the stack
+    while stack:
+        if stack[-1] == "(":
+            raise ValueError("Opening parenthesis without closing one.")
+        output.append(stack.pop())
+
+    return output
+
+
+def evaluate_postfix(postfix):
+    # Evaluate a postfix expression
+    stack = []
+
+    for token in postfix:
+        # Push numbers onto the stack
+        if isinstance(token, float):
+            stack.append(token)
+        else:
+            # An operator needs two operands
+            if len(stack) < 2:
+                raise ValueError("Invalid expression.")
+
+            b = stack.pop()
+            a = stack.pop()
+
+            # Perform the operation
+            if token == "+":
+                stack.append(a + b)
+            elif token == "-":
+                stack.append(a - b)
+            elif token == "*":
+                stack.append(a * b)
+            elif token == "/":
+                if b == 0:
+                    raise ZeroDivisionError("Division by zero is not allowed.")
+                stack.append(a / b)
+
+    # Final result should be the only value left
+    if len(stack) != 1:
+        raise ValueError("Invalid expression.")
+
+    return stack[0]
+
+
+def calculator():
+    # Main calculator function
+    try:
+        expression = input("Enter a mathematical expression: ")
+        tokens = tokenize(expression)
+        postfix = infix_to_postfix(tokens)
+        result = evaluate_postfix(postfix)
+        print("Result:", result)
+
+    except Exception as error:
+        print("Error:", error)
+
+
+calculator()
