@@ -1,5 +1,5 @@
 def priority(op):
-    # Return operator precedence
+    # Return operator priority
     if op in ("+", "-"):
         return 1
     if op in ("*", "/"):
