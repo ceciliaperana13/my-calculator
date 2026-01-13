@@ -108,7 +108,7 @@ class Calculatrice:
         return nombres[0]
 
 
-# Exemples d'utilisation
+
 if __name__ == "__main__":
     calc = Calculatrice()
     
