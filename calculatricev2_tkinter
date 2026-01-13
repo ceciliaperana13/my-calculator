@@ -8,7 +8,8 @@ COLORS = {
     "dark_gray": "#505050",
     "blue": "#043A5C",
     "white": "#FFFFFF",
-    "display_gray": "#888888"
+    "display_gray": "#888888",
+    "rouge":"#7A0101"
 }
 
 # Configuration des boutons
