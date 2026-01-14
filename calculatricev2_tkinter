@@ -9,7 +9,7 @@ COLORS = {
     "blue": "#043A5C",
     "white": "#FFFFFF",
     "display_gray": "#888888",
-    "rouge":"#7A0101"
+    "rouge": "#7A0101"
 }
 
 # Configuration des boutons
@@ -22,7 +22,7 @@ BUTTON_LAYOUT = [
 ]
 
 OPERATORS = {"+", "-", "×", "÷"}
-SPECIAL_FUNCTIONS = {"AC", "+/-", "%"}
+SPECIAL_FUNCTIONS = {"AC", "+/-", "%", "√"}
 
 class Calculator:
     def __init__(self, window: tk.Tk):
@@ -37,15 +37,12 @@ class Calculator:
         self._center_window()
     
     def _setup_window(self):
-        """Configure la fenêtre principale"""
         self.window.title("Calculator")
         self.window.resizable(False, False)
         self.frame = tk.Frame(self.window)
         self.frame.pack()
     
     def _create_display(self):
-        """Crée les labels d'affichage"""
-        # Affichage de l'opération en cours
         self.operation_label = tk.Label(
             self.frame, 
             text="", 
@@ -55,9 +52,8 @@ class Calculator:
             anchor="e", 
             width=len(BUTTON_LAYOUT[0])
         )
-        self.operation_label.grid(row=0, column=0, columnspan=len(BUTTON_LAYOUT[0]), sticky="we")
+        self.operation_label.grid(row=0, column=0, columnspan=4, sticky="we")
         
-        # Affichage principal
         self.display_label = tk.Label(
             self.frame, 
             text="0", 
@@ -67,22 +63,20 @@ class Calculator:
             anchor="e", 
             width=len(BUTTON_LAYOUT[0])
         )
-        self.display_label.grid(row=1, column=0, columnspan=len(BUTTON_LAYOUT[0]), sticky="we")
+        self.display_label.grid(row=1, column=0, columnspan=4, sticky="we")
     
     def _create_buttons(self):
-        """Crée tous les boutons de la calculatrice"""
         for row_idx, row in enumerate(BUTTON_LAYOUT):
             for col_idx, value in enumerate(row):
                 button = tk.Button(
                     self.frame, 
                     text=value, 
                     font=("Arial", 30),
-                    width=len(BUTTON_LAYOUT[0]) - 1, 
+                    width=4,
                     height=1,
                     command=lambda v=value: self.button_clicked(v)
                 )
                 
-                # Configuration des couleurs
                 if value in SPECIAL_FUNCTIONS:
                     button.config(foreground=COLORS["black"], background=COLORS["light_gray"])
                 elif value in OPERATORS or value == "=":
@@ -93,27 +87,20 @@ class Calculator:
                 button.grid(row=row_idx + 2, column=col_idx)
     
     def _center_window(self):
-        """Centre la fenêtre sur l'écran"""
         self.window.update()
-        window_width = self.window.winfo_width()
-        window_height = self.window.winfo_height()
-        screen_width = self.window.winfo_screenwidth()
-        screen_height = self.window.winfo_screenheight()
-        
-        x = int((screen_width / 2) - (window_width / 2))
-        y = int((screen_height / 2) - (window_height / 2))
-        
-        self.window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        w = self.window.winfo_width()
+        h = self.window.winfo_height()
+        sw = self.window.winfo_screenwidth()
+        sh = self.window.winfo_screenheight()
+        self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
     
     def _update_operation_display(self):
-        """Met à jour l'affichage de l'opération en cours"""
-        if self.operator and self.a:
+        if self.operator:
             self.operation_label.config(text=f"{self.a} {self.operator}")
         else:
             self.operation_label.config(text="")
     
     def _clear_all(self):
-        """Réinitialise toutes les valeurs"""
         self.a = "0"
         self.operator = None
         self.b = None
@@ -121,17 +108,12 @@ class Calculator:
     
     @staticmethod
     def _format_number(num: float) -> str:
-        """Formate un nombre en supprimant les décimales inutiles (max 3 décimales)"""
         if num % 1 == 0:
             return str(int(num))
-        else:
-            # Arrondir à 3 décimales maximum
-            rounded = round(num, 3)
-            # Supprimer les zéros inutiles à la fin
-            return f"{rounded:.3f}".rstrip('0').rstrip('.')
+        rounded = round(num, 3)
+        return f"{rounded:.3f}".rstrip("0").rstrip(".")
     
     def _calculate(self) -> str:
-        """Effectue le calcul en fonction de l'opérateur"""
         num_a = float(self.a)
         num_b = float(self.b)
         
@@ -150,28 +132,36 @@ class Calculator:
                 return "0"
     
     def button_clicked(self, value: str):
-        """Gère les clics sur les boutons"""
+        # Bloquer si erreur
+        if self.display_label.cget("text") == "Erreur" and value != "AC":
+            return
+
         match value:
             case "=":
-                if self.a and self.operator:
+                if self.operator:
                     self.b = self.display_label.cget("text")
                     result = self._calculate()
-                    
-                    # Afficher l'opération complète
-                    self.operation_label.config(text=f"{self.a} {self.operator} {self.b} =")
+                    self.operation_label.config(
+                        text=f"{self.a} {self.operator} {self.b} ="
+                    )
                     self.display_label.config(text=result)
-                    
-                    # Préparer pour la prochaine opération
                     self.a = result
                     self.operator = None
                     self.b = None
             
             case "+" | "-" | "×" | "÷":
-                if not self.operator:
-                    self.a = self.display_label.cget("text")
+                current = self.display_label.cget("text")
+
+                #  CALCUL EN CHAÎNE
+                if self.operator:
+                    self.b = current
+                    result = self._calculate()
+                    self.a = result
                     self.display_label.config(text="0")
-                    self.b = "0"
-                
+                else:
+                    self.a = current
+                    self.display_label.config(text="0")
+
                 self.operator = value
                 self._update_operation_display()
             
@@ -181,36 +171,39 @@ class Calculator:
             
             case "+/-":
                 current = float(self.display_label.cget("text"))
-                result = self._format_number(current * -1)
-                self.display_label.config(text=result)
+                self.display_label.config(
+                    text=self._format_number(current * -1)
+                )
             
             case "%":
                 current = float(self.display_label.cget("text"))
-                result = self._format_number(current / 100)
-                self.display_label.config(text=result)
+                self.display_label.config(
+                    text=self._format_number(current / 100)
+                )
             
             case "√":
                 current = float(self.display_label.cget("text"))
                 if current < 0:
                     self.display_label.config(text="Erreur")
                 else:
-                    result = self._format_number(current ** 0.5)
-                    self.display_label.config(text=result)
+                    self.display_label.config(
+                        text=self._format_number(current ** 0.5)
+                    )
             
             case ".":
-                current_text = self.display_label.cget("text")
-                if "." not in current_text:
-                    self.display_label.config(text=current_text + ".")
+                current = self.display_label.cget("text")
+                if "." not in current:
+                    self.display_label.config(text=current + ".")
             
-            case "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9":
-                current_text = self.display_label.cget("text")
-                if current_text == "0":
+            case _:
+                current = self.display_label.cget("text")
+                if current == "0":
                     self.display_label.config(text=value)
                 else:
-                    self.display_label.config(text=current_text + value)
+                    self.display_label.config(text=current + value)
 
-# Lancement de l'application
+# Lancement
 if __name__ == "__main__":
     window = tk.Tk()
-    calculator = Calculator(window)
+    Calculator(window)
     window.mainloop()
