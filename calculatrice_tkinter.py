@@ -1,136 +1,278 @@
-import tkinter 
+import tkinter as tk
+from typing import Optional
 
-button_values = [
-    ["AC", "+/-", "%", "÷"], 
-    ["7", "8", "9", "×"], 
-    ["4", "5", "6", "-"],
-    ["1", "2", "3", "+"],
-    ["0", ".", "√", "="]
+# Configuration des couleurs
+COLORS = {
+    "light_gray": "#D4D4D2",
+    "black": "#1C1C1C",
+    "dark_gray": "#505050",
+    "blue": "#043A5C",
+    "white": "#FFFFFF",
+    "display_gray": "#888888",
+    "rouge": "#7A0101"
+}
+
+# Configuration des boutons
+BUTTON_LAYOUT = [
+    ["AC", "%", "(", ")"],
+    ["7", "8", "9", "÷"],
+    ["4", "5", "6", "×"],
+    ["1", "2", "3", "-"],
+    ["0", ".", "√", "+"],
+    ["", "", "", "="]
 ]
 
-right_symbols = ["÷", "×", "-", "+", "="]
-top_symbols = ["AC", "+/-", "%"]
+OPERATORS = {"+", "-", "×", "÷"}
+SPECIAL_FUNCTIONS = {"AC", "+/-", "%", "√", "(", ")"}
 
-row_count = len(button_values) #5
-column_count = len(button_values[0]) #4
+class Calculator:
+    def __init__(self, window: tk.Tk):
+        self.window = window
+        self.expression = ""
+        self.result_shown = False
 
-color_light_gray = "#D4D4D2"
-color_black = "#1C1C1C"
-color_dark_gray = "#505050"
-color_orange = "#FF9500"
-color_white = "white"
+        self._setup_window()
+        self._create_display()
+        self._create_buttons()
+        self._center_window()
 
-#window setup
-window = tkinter.Tk() #create the window
-window.title("Calculator")
-window.resizable(False, False)
+    def _setup_window(self):
+        self.window.title("Calculator")
+        self.window.resizable(False, False)
+        self.frame = tk.Frame(self.window)
+        self.frame.pack()
 
-frame = tkinter.Frame(window)
-label = tkinter.Label(frame, text="0", font=("Arial", 45), background=color_black,
-                      foreground=color_white, anchor="e", width=column_count)
+    def _create_display(self):
+        self.operation_label = tk.Label(
+            self.frame,
+            text="",
+            font=("Arial", 20),
+            bg=COLORS["black"],
+            fg=COLORS["display_gray"],
+            anchor="e"
+        )
+        self.operation_label.grid(row=0, column=0, columnspan=4, sticky="we")
 
-label.grid(row=0, column=0, columnspan=column_count, sticky="we")
+        self.display_label = tk.Label(
+            self.frame,
+            text="0",
+            font=("Arial", 45),
+            bg=COLORS["black"],
+            fg=COLORS["white"],
+            anchor="e"
+        )
+        self.display_label.grid(row=1, column=0, columnspan=4, sticky="we")
 
-for row in range(row_count):
-    for column in range(column_count):
-        value = button_values[row][column]
-        button = tkinter.Button(frame, text=value, font=("Arial", 30),
-                                width=column_count-1, height=1,
-                                command=lambda value=value: button_clicked(value))
-        
-        if value in top_symbols:
-            button.config(foreground=color_black, background=color_light_gray)
-        elif value in right_symbols:
-            button.config(foreground=color_white, background=color_orange)
-        else:
-            button.config(foreground=color_white, background=color_dark_gray)
-        
-        button.grid(row=row+1, column=column)
+    def _create_buttons(self):
+        for r, row in enumerate(BUTTON_LAYOUT):
+            for c, value in enumerate(row):
+                btn = tk.Button(
+                    self.frame,
+                    text=value,
+                    font=("Arial", 30),
+                    width=4,
+                    command=lambda v=value: self.button_clicked(v)
+                )
 
-frame.pack()
+                if value in SPECIAL_FUNCTIONS:
+                    btn.config(bg=COLORS["light_gray"])
+                elif value in OPERATORS or value == "=":
+                    btn.config(bg=COLORS["blue"], fg="white")
+                else:
+                    btn.config(bg=COLORS["dark_gray"], fg="white")
 
-#A+B, A-B, A*B, A/B
-A = "0"
-operator = None
-B = None
+                btn.grid(row=r + 2, column=c)
 
-def clear_all():
-    global A, B, operator
-    A = "0"
-    operator = None
-    B = None
+    def _center_window(self):
+        self.window.update()
+        w, h = self.window.winfo_width(), self.window.winfo_height()
+        sw, sh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
+        self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
-def remove_zero_decimal(num):
-    if num % 1 == 0:
-        num = int(num)
-    return str(num)
+    # ================= MOTEUR DE CALCUL =================
 
-def button_clicked(value):
-    global right_symbols, top_symbols, label, A, B, operator
+    def _format_number(self, num: float) -> str:
+        if num % 1 == 0:
+            return str(int(num))
+        return f"{round(num, 3):.3f}".rstrip("0").rstrip(".")
 
-    if value in right_symbols:
-        if value == "=":
-            if A is not None and operator is not None:
-                B = label["text"]
-                numA = float(A)
-                numB = float(B)
+    def _tokenize(self, expr: str):
+        tokens = []
+        number = ""
+        i = 0
 
-                if operator == "+":
-                    label["text"] = remove_zero_decimal(numA + numB)
-                elif operator == "-":
-                    label["text"] = remove_zero_decimal(numA - numB)
-                elif operator == "×":
-                    label["text"] = remove_zero_decimal(numA * numB)
-                elif operator == "÷":
-                    label["text"] = remove_zero_decimal(numA / numB)
-                
-                clear_all()
+        while i < len(expr):
+            c = expr[i]
 
-        elif value in "+-×÷": #500 +, *
-            if operator is None:
-                A = label["text"]
-                label["text"] = "0"
-                B = "0"
-            
-            operator = value
+            if c.isdigit() or c == ".":
+                number += c
 
-    elif value in top_symbols:
-        if value == "AC":
-            clear_all()
-            label["text"] = "0"
+            elif c == "-" and (i == 0 or expr[i-1] in "+-×÷("):
+                number += c  # signe négatif
 
-        elif value == "+/-":
-            result = float(label["text"]) * -1
-            label["text"] = remove_zero_decimal(result)
-
-        elif value == "%":
-            result = float(label["text"]) / 100
-            label["text"] = remove_zero_decimal(result)           
-        
-    else: #digits or .
-        if value == ".":
-            if value not in label["text"]:
-                label["text"] += value
-
-        elif value in "0123456789":
-            if label["text"] == "0":
-                label["text"] = value #replace 0
             else:
-                label["text"] += value #append digit
+                if number:
+                    tokens.append(number)
+                    number = ""
+                tokens.append(c)
 
+            i += 1
 
+        if number:
+            tokens.append(number)
 
-#center the window
-window.update() #update window with the new size dimensions
-window_width = window.winfo_width()
-window_height = window.winfo_height()
-screen_width = window.winfo_screenwidth()
-screen_height = window.winfo_screenheight()
+        return tokens
 
-window_x = int((screen_width/2) - (window_width/2))
-window_y = int((screen_height/2) - (window_height/2))
+    def _to_rpn(self, tokens):
+        priority = {"+": 1, "-": 1, "×": 2, "÷": 2}
+        output = []
+        stack = []
 
-#format "(w)x(h)+(x)+(y)"
-window.geometry(f"{window_width}x{window_height}+{window_x}+{window_y}")
+        for t in tokens:
+            if t.replace(".", "", 1).lstrip("-").isdigit():
+                output.append(t)
 
-window.mainloop()
+            elif t == "(":
+                stack.append(t)
+
+            elif t == ")":
+                while stack and stack[-1] != "(":
+                    output.append(stack.pop())
+                stack.pop()  # retire "("
+
+            else:  # opérateur
+                while (
+                    stack
+                    and stack[-1] != "("
+                    and priority.get(stack[-1], 0) >= priority[t]
+                ):
+                    output.append(stack.pop())
+                stack.append(t)
+
+        while stack:
+            output.append(stack.pop())
+
+        return output
+
+    def _evaluate_rpn(self, rpn):
+        stack = []
+        for t in rpn:
+            if t.replace(".", "", 1).lstrip("-").isdigit():
+                stack.append(float(t))
+            else:
+                b, a = stack.pop(), stack.pop()
+                if t == "+":
+                    stack.append(a + b)
+                elif t == "-":
+                    stack.append(a - b)
+                elif t == "×":
+                    stack.append(a * b)
+                elif t == "÷":
+                    if b == 0:
+                        raise ZeroDivisionError
+                    stack.append(a / b)
+        return self._format_number(stack[0])
+
+    # ================= INTERACTIONS =================
+
+    def button_clicked(self, value: str):
+        if self.display_label.cget("text") == "Erreur" and value != "AC":
+            return
+
+        match value:
+            case "AC":
+                self.expression = ""
+                self.result_shown = False
+                self.display_label.config(text="0")
+                self.operation_label.config(text="")
+
+            case "=":
+                if not self.expression:
+                    return
+                try:
+                    tokens = self._tokenize(self.expression)
+                    rpn = self._to_rpn(tokens)
+                    result = self._evaluate_rpn(rpn)
+
+                    self.operation_label.config(text=self.expression + " =")
+                    self.display_label.config(text=result)
+                    self.expression = result
+                    self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
+
+            case "(" | ")":
+                if self.result_shown:
+                    self.expression = ""
+                    self.result_shown = False
+
+                self.expression += value
+                self.operation_label.config(text=self.expression)
+
+            case "√":
+                try:
+                    current = float(self.display_label.cget("text"))
+                    if current < 0:
+                        raise ValueError
+
+                    result = self._format_number(current ** 0.5)
+                    self.display_label.config(text=result)
+                    self.expression = result
+                    self.operation_label.config(text=result)
+                    self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
+
+            case "%":
+                try:
+                    current = float(self.display_label.cget("text"))
+                    result = self._format_number(current / 100)
+                    self.display_label.config(text=result)
+                    self.expression = result
+                    self.operation_label.config(text=self.expression)
+                    self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
+
+            case "+" | "-" | "×" | "÷":
+                self.result_shown = False
+                if self.expression and self.expression[-1] in "+-×÷":
+                    self.expression = self.expression[:-1]
+                self.expression += value
+                self.operation_label.config(text=self.expression)
+                self.display_label.config(text="0")
+
+            case ".":
+                current = self.display_label.cget("text")
+                if "." not in current:
+                    self.display_label.config(text=current + ".")
+                    self.expression += "."
+
+            case _:
+                if self.result_shown:
+                    self.expression = value
+                    self.display_label.config(text=value)
+                    self.operation_label.config(text=self.expression)
+                    self.result_shown = False
+                    return
+
+                current = self.display_label.cget("text")
+                if current == "0":
+                    self.display_label.config(text=value)
+                else:
+                    self.display_label.config(text=current + value)
+
+                self.expression += value
+                self.operation_label.config(text=self.expression)
+
+# Lancement
+if __name__ == "__main__":
+    window = tk.Tk()
+    Calculator(window)
+    window.mainloop()
