@@ -6,7 +6,6 @@ import ast
 # Operator has the functions who make the samething that the symbols mathematic
 import operator
 
-
 # Import Pynput
 from pynput import keyboard
 
@@ -14,7 +13,7 @@ from pynput import keyboard
 from datetime import datetime
 
 
-with open("log_calculatrice.txt", "w") as f:
+with open("log_calculatrice.txt", "a") as f:
     f.write(
         f"--- Session débutée le {datetime.now().strftime('%d/%m/%Y à %H:%M:%S')} ---\n"
     )
@@ -82,7 +81,7 @@ def user_input(message):
 
 
 def symbol_input(message):
-    sign = "+", "*", "/", "-"
+    sign = "+", "*", "/", "-", "**"
     try:
         while True:
             seizure = input(message)
@@ -90,7 +89,7 @@ def symbol_input(message):
                 return seizure
     except:
         print(
-            "Erreur : le caractère n'est pas un symbole accepté, veuillez choisir entre (+, -, / ou *)  ."
+            "Erreur : le caractère n'est pas un symbole accepté, veuillez choisir entre (+, -, /, * ou **)  ."
         )
 
 
@@ -111,6 +110,10 @@ def treatmentdiv(val1, val2):
 
 def treatmentsub(val1, val2):
     return val1 - val2
+
+
+def treatmentpower(val1, val2):
+    return val1**val2
 
 
 # The function for leave with letter q lower
@@ -137,7 +140,7 @@ def main():
 
         # the choice the numbers and the symbols
         nombre1 = user_input("Entrez un chiffre ou nombre :")
-        operation = symbol_input("Choisissez un symbole + | * | / | - :")
+        operation = symbol_input("Choisissez un symbole + | * | / | - | ** :")
         nombre2 = user_input("Entrez un chiffre ou nombre :")
         # the loop try, for verify if the variable operation is / and nombre2 is 0,
         # if is that the user need choose an other digit or number
@@ -155,6 +158,8 @@ def main():
             print(treatmentdiv(nombre1, nombre2))
         if operation == "-":
             print(treatmentsub(nombre1, nombre2))
+        if operation == "**":
+            print(treatmentpower(nombre1, nombre2))
 
         # It's for stop the loop while with the lower letter q or continue with Enter
         if leave():
