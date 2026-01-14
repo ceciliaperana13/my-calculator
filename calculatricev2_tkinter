@@ -119,14 +119,14 @@ class Calculator:
         return tokens
 
     def _to_rpn(self, tokens):
-        precedence = {"+": 1, "-": 1, "×": 2, "÷": 2}
+        priority = {"+": 1, "-": 1, "×": 2, "÷": 2}
         output, stack = [], []
 
         for t in tokens:
             if t.replace(".", "", 1).lstrip("-").isdigit():
                 output.append(t)
             else:
-                while stack and precedence.get(stack[-1], 0) >= precedence[t]:
+                while stack and priority.get(stack[-1], 0) >= priority[t]:
                     output.append(stack.pop())
                 stack.append(t)
 
