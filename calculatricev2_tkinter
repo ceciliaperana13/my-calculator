@@ -14,8 +14,8 @@ COLORS = {
 
 # Configuration des boutons
 BUTTON_LAYOUT = [
-    ["AC", "+/-", "%", "÷"], 
-    ["7", "8", "9", "×"], 
+    ["AC", "+/-", "%", "÷"],
+    ["7", "8", "9", "×"],
     ["4", "5", "6", "-"],
     ["1", "2", "3", "+"],
     ["0", ".", "√", "="]
@@ -28,25 +28,26 @@ class Calculator:
     def __init__(self, window: tk.Tk):
         self.window = window
         self.expression = ""
+        self.result_shown = False
 
         self._setup_window()
         self._create_display()
         self._create_buttons()
         self._center_window()
-    
+
     def _setup_window(self):
         self.window.title("Calculator")
         self.window.resizable(False, False)
         self.frame = tk.Frame(self.window)
         self.frame.pack()
-    
+
     def _create_display(self):
         self.operation_label = tk.Label(
             self.frame,
             text="",
             font=("Arial", 20),
-            background=COLORS["black"],
-            foreground=COLORS["display_gray"],
+            bg=COLORS["black"],
+            fg=COLORS["display_gray"],
             anchor="e",
             width=4
         )
@@ -56,13 +57,13 @@ class Calculator:
             self.frame,
             text="0",
             font=("Arial", 45),
-            background=COLORS["black"],
-            foreground=COLORS["white"],
+            bg=COLORS["black"],
+            fg=COLORS["white"],
             anchor="e",
             width=4
         )
         self.display_label.grid(row=1, column=0, columnspan=4, sticky="we")
-    
+
     def _create_buttons(self):
         for r, row in enumerate(BUTTON_LAYOUT):
             for c, value in enumerate(row):
@@ -75,94 +76,85 @@ class Calculator:
                 )
 
                 if value in SPECIAL_FUNCTIONS:
-                    btn.config(background=COLORS["light_gray"], foreground=COLORS["black"])
+                    btn.config(bg=COLORS["light_gray"])
                 elif value in OPERATORS or value == "=":
-                    btn.config(background=COLORS["blue"], foreground=COLORS["white"])
+                    btn.config(bg=COLORS["blue"], fg="white")
                 else:
-                    btn.config(background=COLORS["dark_gray"], foreground=COLORS["white"])
+                    btn.config(bg=COLORS["dark_gray"], fg="white")
 
                 btn.grid(row=r + 2, column=c)
-    
+
     def _center_window(self):
         self.window.update()
-        w = self.window.winfo_width()
-        h = self.window.winfo_height()
-        sw = self.window.winfo_screenwidth()
-        sh = self.window.winfo_screenheight()
+        w, h = self.window.winfo_width(), self.window.winfo_height()
+        sw, sh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
-    #MOTEUR DE CALCUL 
+    #  MOTEUR DE CALCUL 
 
     def _format_number(self, num: float) -> str:
         if num % 1 == 0:
             return str(int(num))
         return f"{round(num, 3):.3f}".rstrip("0").rstrip(".")
 
-    def _tokenize(self, expr: str) -> list[str]:
+    def _tokenize(self, expr: str):
         tokens = []
         number = ""
-
-        for char in expr:
-            if char.isdigit() or char == ".":
-                number += char
+        i = 0
+        while i < len(expr):
+            c = expr[i]
+            if c.isdigit() or c == ".":
+                number += c
+            elif c == "-" and (i == 0 or expr[i-1] in "+-×÷"):
+                # C'est un signe négatif pour le nombre
+                number += c
             else:
                 if number:
                     tokens.append(number)
                     number = ""
-                tokens.append(char)
-
+                tokens.append(c)
+            i += 1
         if number:
             tokens.append(number)
-
         return tokens
 
-    def _to_rpn(self, tokens: list[str]) -> list[str]:
+    def _to_rpn(self, tokens):
         precedence = {"+": 1, "-": 1, "×": 2, "÷": 2}
-        output = []
-        stack = []
+        output, stack = [], []
 
-        for token in tokens:
-            if token.replace(".", "", 1).isdigit():
-                output.append(token)
+        for t in tokens:
+            if t.replace(".", "", 1).lstrip("-").isdigit():
+                output.append(t)
             else:
-                while (
-                    stack and
-                    stack[-1] in precedence and
-                    precedence[stack[-1]] >= precedence[token]
-                ):
+                while stack and precedence.get(stack[-1], 0) >= precedence[t]:
                     output.append(stack.pop())
-                stack.append(token)
+                stack.append(t)
 
         while stack:
             output.append(stack.pop())
 
         return output
 
-    def _evaluate_rpn(self, rpn: list[str]) -> str:
+    def _evaluate_rpn(self, rpn):
         stack = []
-
-        for token in rpn:
-            if token.replace(".", "", 1).isdigit():
-                stack.append(float(token))
+        for t in rpn:
+            if t.replace(".", "", 1).lstrip("-").isdigit():
+                stack.append(float(t))
             else:
-                b = stack.pop()
-                a = stack.pop()
-
-                match token:
-                    case "+":
-                        stack.append(a + b)
-                    case "-":
-                        stack.append(a - b)
-                    case "×":
-                        stack.append(a * b)
-                    case "÷":
-                        if b == 0:
-                            raise ZeroDivisionError
-                        stack.append(a / b)
-
+                b, a = stack.pop(), stack.pop()
+                if t == "+":
+                    stack.append(a + b)
+                elif t == "-":
+                    stack.append(a - b)
+                elif t == "×":
+                    stack.append(a * b)
+                elif t == "÷":
+                    if b == 0:
+                        raise ZeroDivisionError
+                    stack.append(a / b)
         return self._format_number(stack[0])
 
-    #INTERACTIONS 
+    # INTERACTIONS
 
     def button_clicked(self, value: str):
         if self.display_label.cget("text") == "Erreur" and value != "AC":
@@ -171,6 +163,7 @@ class Calculator:
         match value:
             case "AC":
                 self.expression = ""
+                self.result_shown = False
                 self.display_label.config(text="0")
                 self.operation_label.config(text="")
 
@@ -185,26 +178,95 @@ class Calculator:
                     self.operation_label.config(text=self.expression + " =")
                     self.display_label.config(text=result)
                     self.expression = result
-
+                    self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
                     self.expression = ""
+                    self.result_shown = True
+
+            case "√":
+                try:
+                    current = float(self.display_label.cget("text"))
+                    if current < 0:
+                        raise ValueError
+
+                    result = self._format_number(current ** 0.5)
+                    self.display_label.config(text=result)
+                    self.expression = result
+                    self.operation_label.config(text=result)
+                    self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
+
+            case "%":
+                try:
+                    current = float(self.display_label.cget("text"))
+                    result = self._format_number(current / 100)
+                    self.display_label.config(text=result)
+                    self.expression = result
+                    self.operation_label.config(text=self.expression)
+                    self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
+
+            case "+/-":
+                try:
+                    current = self.display_label.cget("text")
+                    if current.startswith("-"):
+                        result = current[1:]
+                    else:
+                        result = "-" + current
+                    self.display_label.config(text=result)
+
+                    if self.result_shown:
+                        self.expression = result
+                    else:
+                        tokens = self._tokenize(self.expression)
+                        for i in range(len(tokens)-1, -1, -1):
+                            if tokens[i].replace(".", "", 1).isdigit() or (tokens[i].startswith("-") and tokens[i][1:].replace(".", "", 1).isdigit()):
+                                tokens[i] = result
+                                break
+                        self.expression = "".join(tokens)
+
+                    self.operation_label.config(text=self.expression)
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
 
             case "+" | "-" | "×" | "÷":
+                self.result_shown = False
                 if self.expression and self.expression[-1] in "+-×÷":
                     self.expression = self.expression[:-1]
-
                 self.expression += value
                 self.operation_label.config(text=self.expression)
                 self.display_label.config(text="0")
 
             case ".":
+                if self.result_shown:
+                    self.expression = "0."
+                    self.display_label.config(text="0.")
+                    self.operation_label.config(text=self.expression)
+                    self.result_shown = False
+                    return
+
                 current = self.display_label.cget("text")
                 if "." not in current:
                     self.display_label.config(text=current + ".")
                     self.expression += "."
 
             case _:
+                if self.result_shown:
+                    self.expression = value
+                    self.display_label.config(text=value)
+                    self.operation_label.config(text=self.expression)
+                    self.result_shown = False
+                    return
+
                 current = self.display_label.cget("text")
                 if current == "0":
                     self.display_label.config(text=value)
@@ -219,3 +281,7 @@ if __name__ == "__main__":
     window = tk.Tk()
     Calculator(window)
     window.mainloop()
+
+
+
+
