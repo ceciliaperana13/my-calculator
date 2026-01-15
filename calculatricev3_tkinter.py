@@ -106,7 +106,11 @@ class Calculator:
             if c.isdigit() or c == ".":
                 number += c
             elif c == "-" and (i == 0 or expr[i-1] in "+-×÷("):
-                number += c
+                if i + 1 < len(expr) and expr[i+1] == "(":
+                 tokens.append("0")
+                 tokens.append("-")
+                else: 
+                 number += c
             else:
                 if number:
                     tokens.append(number)
