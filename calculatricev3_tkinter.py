@@ -88,7 +88,7 @@ class Calculator:
         sw, sh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
-    # ================= MOTEUR DE CALCUL =================
+    # MOTEUR DE CALCUL 
 
     def _format_number(self, num: float) -> str:
         if num % 1 == 0:
@@ -162,7 +162,7 @@ class Calculator:
                     stack.append(a / b)
         return self._format_number(stack[0])
 
-    # ================= INTERACTIONS =================
+    # INTERACTIONS 
 
     def button_clicked(self, value: str):
         if self.display_label.cget("text") == "Erreur" and value != "AC":
