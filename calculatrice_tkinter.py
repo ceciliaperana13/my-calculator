@@ -9,7 +9,6 @@ COLORS = {
     "blue": "#043A5C",
     "white": "#FFFFFF",
     "display_gray": "#888888",
-    "rouge": "#7A0101"
 }
 
 # Configuration des boutons
@@ -18,12 +17,12 @@ BUTTON_LAYOUT = [
     ["7", "8", "9", "÷"],
     ["4", "5", "6", "×"],
     ["1", "2", "3", "-"],
-    ["0", ".", "", "+"],
-    ["", "+/-", "√", "="]
+    ["0", ".", "x²", "+"],
+    ["x³", "+/-", "√", "="]
 ]
 
 OPERATORS = {"+", "-", "×", "÷"}
-SPECIAL_FUNCTIONS = {"AC", "+/-", "%", "√", "(", ")"}
+SPECIAL_FUNCTIONS = {"AC", "+/-", "%", "√", "(", ")", "x²", "x³"}
 
 class Calculator:
     def __init__(self, window: tk.Tk):
@@ -263,6 +262,8 @@ class Calculator:
                     self.display_label.config(text="Erreur")
                     self.expression = ""
                     self.result_shown = True
+
+            
 
             case "+" | "-" | "×" | "÷":
                 self.result_shown = False
