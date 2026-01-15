@@ -103,14 +103,16 @@ class Calculator:
         while i < len(expr):
             c = expr[i]
 
-            if c.isdigit() or c == ".":
-                number += c
-            elif c == "-" and (i == 0 or expr[i-1] in "+-×÷("):
+            # Gestion du moins unaire
+            if c == "-" and (i == 0 or expr[i-1] in "+-×÷("):
+                # Si le moins est suivi d'une parenthèse, on transforme en 0-(
                 if i + 1 < len(expr) and expr[i+1] == "(":
-                 tokens.append("0")
-                 tokens.append("-")
-                else: 
-                 number += c
+                    tokens.append("0")
+                    tokens.append("-")
+                else:
+                    number += c
+            elif c.isdigit() or c == ".":
+                number += c
             else:
                 if number:
                     tokens.append(number)
@@ -181,10 +183,11 @@ class Calculator:
 
             case "=":
                 try:
-                    tokens = self._tokenize(self.expression)
+                    expr = self.expression
+                    tokens = self._tokenize(expr)
                     rpn = self._to_rpn(tokens)
                     result = self._evaluate_rpn(rpn)
-                    self.operation_label.config(text=self.expression + " =")
+                    self.operation_label.config(text=expr + " =")
                     self.display_label.config(text=result)
                     self.expression = result
                     self.result_shown = True
@@ -205,44 +208,63 @@ class Calculator:
 
             case "√":
                 try:
-                    current = float(self.display_label.cget("text"))
-                    result = self._format_number(current ** 0.5)
-                    self.display_label.config(text=result)
-                    self.expression = result
-                    self.operation_label.config(text=f"√({current})")
+                    tokens = self._tokenize(self.expression)
+                    rpn = self._to_rpn(tokens)
+                    result = float(self._evaluate_rpn(rpn))
+                    result = result ** 0.5
+                    self.display_label.config(text=self._format_number(result))
+                    self.operation_label.config(text=f"√({self.expression})")
+                    self.expression = str(result)
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
 
             case "x²":
                 try:
-                    current = float(self.display_label.cget("text"))
-                    result = self._format_number(current ** 2)
-                    self.display_label.config(text=result)
-                    self.expression = result
-                    self.operation_label.config(text=f"({current})²")
+                    tokens = self._tokenize(self.expression)
+                    rpn = self._to_rpn(tokens)
+                    result = float(self._evaluate_rpn(rpn))
+                    result = result ** 2
+                    self.display_label.config(text=self._format_number(result))
+                    self.operation_label.config(text=f"({self.expression})²")
+                    self.expression = str(result)
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
 
             case "x³":
                 try:
-                    current = float(self.display_label.cget("text"))
-                    result = self._format_number(current ** 3)
-                    self.display_label.config(text=result)
-                    self.expression = result
-                    self.operation_label.config(text=f"({current})³")
+                    tokens = self._tokenize(self.expression)
+                    rpn = self._to_rpn(tokens)
+                    result = float(self._evaluate_rpn(rpn))
+                    result = result ** 3
+                    self.display_label.config(text=self._format_number(result))
+                    self.operation_label.config(text=f"({self.expression})³")
+                    self.expression = str(result)
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
 
             case "%":
-                current = float(self.display_label.cget("text"))
-                result = self._format_number(current / 100)
-                self.display_label.config(text=result)
-                self.expression = result
-                self.operation_label.config(text=result)
-                self.result_shown = True
+                try:
+                    tokens = self._tokenize(self.expression)
+                    rpn = self._to_rpn(tokens)
+                    result = float(self._evaluate_rpn(rpn))
+                    result = result / 100
+                    self.display_label.config(text=self._format_number(result))
+                    self.expression = str(result)
+                    self.operation_label.config(text=f"{self.expression}%")
+                    self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
 
             case "+" | "-" | "×" | "÷":
                 if self.expression and self.expression[-1] in "+-×÷":
