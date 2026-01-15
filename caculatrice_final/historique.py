@@ -30,11 +30,11 @@ class HistoriqueManager:
         self.history_window.title("Historique des calculs")
         self.history_window.geometry("400x500")
         
-        # Frame principal
+        
         main_frame = tk.Frame(self.history_window)
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
 
-        # Label titre
+        
         title_label = tk.Label(
             main_frame,
             text="Historique",

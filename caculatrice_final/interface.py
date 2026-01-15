@@ -66,7 +66,7 @@ class Calculator:
                     command=lambda v=value: self.button_clicked(v)
                 )
 
-                # Appliquer le style selon le type de bouton
+                #style de boutons
                 if value == "Hist":
                     btn.config(bg=COLORS["light_gray"], font=("Arial", 20))
                 elif value in SPECIAL_FUNCTIONS:

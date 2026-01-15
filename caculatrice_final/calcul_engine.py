@@ -40,7 +40,7 @@ class CalculEngine:
 
     @staticmethod
     def to_rpn(tokens):
-        """Convertit les tokens en notation polonaise inverse (RPN)"""
+        
         priority = {"+": 1, "-": 1, "×": 2, "÷": 2}
         output = []
         stack = []
@@ -73,7 +73,7 @@ class CalculEngine:
 
     @staticmethod
     def evaluate_rpn(rpn):
-        """Évalue une expression en notation polonaise inverse"""
+       
         stack = []
         for t in rpn:
             if t.replace(".", "", 1).lstrip("-").isdigit():
