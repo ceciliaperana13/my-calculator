@@ -18,8 +18,8 @@ BUTTON_LAYOUT = [
     ["7", "8", "9", "÷"],
     ["4", "5", "6", "×"],
     ["1", "2", "3", "-"],
-    ["0", ".", "√", "+"],
-    ["", "", "", "="]
+    ["0", ".", "", "+"],
+    ["", "+/-", "√", "="]
 ]
 
 OPERATORS = {"+", "-", "×", "÷"}
@@ -198,6 +198,30 @@ class Calculator:
                     self.display_label.config(text=result)
                     self.expression = result
                     self.result_shown = True
+                except Exception:
+                    self.display_label.config(text="Erreur")
+                    self.expression = ""
+                    self.result_shown = True
+            case "+/-":
+                try:
+                    current = self.display_label.cget("text")
+                    if current.startswith("-"):
+                        result = current[1:]
+                    else:
+                        result = "-" + current
+                    self.display_label.config(text=result)
+
+                    if self.result_shown:
+                        self.expression = result
+                    else:
+                        tokens = self._tokenize(self.expression)
+                        for i in range(len(tokens)-1, -1, -1):
+                            if tokens[i].replace(".", "", 1).isdigit() or (tokens[i].startswith("-") and tokens[i][1:].replace(".", "", 1).isdigit()):
+                                tokens[i] = result
+                                break
+                        self.expression = "".join(tokens)
+
+                    self.operation_label.config(text=self.expression)
                 except Exception:
                     self.display_label.config(text="Erreur")
                     self.expression = ""
