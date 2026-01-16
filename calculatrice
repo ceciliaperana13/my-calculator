@@ -1,0 +1,146 @@
+
+import re
+
+class Calculatrice:
+    def addition(self, a, b):
+        return a + b
+    
+    def soustraction(self, a, b):
+        return a - b
+    
+    def multiplication(self, a, b):
+        return a * b
+    
+    def division(self, a, b):
+        if b == 0:
+            raise ZeroDivisionError("Division par zéro impossible")
+        return a / b
+    
+    def evaluer(self, expression):
+        """respectant les priorités"""
+        
+        expression = expression.replace(" ", "")
+        
+        # Gérer les parenthèses en premier
+        while "(" in expression:
+            expression = self._traiter_parentheses(expression)
+        
+        # Évaluer l'expression sans parenthèses
+        return self._evaluer_sans_parentheses(expression)
+    
+    def _traiter_parentheses(self, expression):
+       
+        debut = expression.rfind("(")
+        if debut == -1:
+            return expression
+        
+       
+        fin = expression.find(")", debut)
+        if fin == -1:
+            raise ValueError("Parenthèses non équilibrées")
+        
+        # Évaluer le contenu de la parenthèse
+        sous_expr = expression[debut+1:fin]
+        resultat = self._evaluer_sans_parentheses(sous_expr)
+        
+        # Remplacer la parenthèse par son résultat
+        return expression[:debut] + str(resultat) + expression[fin+1:]
+    
+    def _evaluer_sans_parentheses(self, expression):
+        """Évalue une expression sans parenthèses en respectant les priorités"""
+        # Séparer les nombres et opérateurs
+        tokens = re.findall(r'-?\d+\.?\d*|[+\-*/]', expression)
+        
+        # Gérer les nombres négatifs au début
+        if not tokens:
+            raise ValueError("Expression vide")
+        
+        # Convertir les nombres en float
+        nombres = []
+        operateurs = []
+        i = 0
+        
+        while i < len(tokens):
+            token = tokens[i]
+            if token in "+-*/" and i == 0:
+                # Opérateur unaire au début
+                if token == "-":
+                    nombres.append(-float(tokens[i+1]))
+                    i += 2
+                    continue
+                else:
+                    raise ValueError("Expression invalide")
+            elif token in "+-*/":
+                operateurs.append(token)
+            else:
+                nombres.append(float(token))
+            i += 1
+        
+        # Priorité 1: Multiplication et division (de gauche à droite)
+        i = 0
+        while i < len(operateurs):
+            if operateurs[i] == "*":
+                nombres[i] = self.multiplication(nombres[i], nombres[i+1])
+                nombres.pop(i+1)
+                operateurs.pop(i)
+            elif operateurs[i] == "/":
+                nombres[i] = self.division(nombres[i], nombres[i+1])
+                nombres.pop(i+1)
+                operateurs.pop(i)
+            else:
+                i += 1
+        
+        # Priorité 2: Addition et soustraction (de gauche à droite)
+        i = 0
+        while i < len(operateurs):
+            if operateurs[i] == "+":
+                nombres[i] = self.addition(nombres[i], nombres[i+1])
+                nombres.pop(i+1)
+                operateurs.pop(i)
+            elif operateurs[i] == "-":
+                nombres[i] = self.soustraction(nombres[i], nombres[i+1])
+                nombres.pop(i+1)
+                operateurs.pop(i)
+            else:
+                i += 1
+        
+        return nombres[0]
+
+
+
+if __name__ == "__main__":
+    calc = Calculatrice()
+    
+   
+    expressions = [
+        "2 + 3 * 4",           # 14 (pas 20)
+        "10 - 2 * 3",          # 4 (pas 24)
+        "20 / 4 + 2",          # 7
+        "(2 + 3) * 4",         # 20
+        "10 - (2 * 3)",        # 4
+        "2 + 3 * 4 - 5",       # 9
+        "(10 + 5) / 3",        # 5
+        "2 * (3 + 4) * 2",     # 28
+    ]
+    
+    print("=== Tests de la calculatrice ===\n")
+    for expr in expressions:
+        try:
+            resultat = calc.evaluer(expr)
+            print(f"{expr:20} = {resultat}")
+        except Exception as e:
+            print(f"{expr:20} = Erreur: {e}")
+    
+    # Mode interactif
+    print("\n=== Mode interactif ===")
+    print("Entrez vos calculs (ou 'q' pour quitter):\n")
+    
+    while True:
+        try:
+            expr = input("> ")
+            if expr.lower() in ['q', 'quit', 'exit']:
+                break
+            resultat = calc.evaluer(expr)
+            print(f"= {resultat}\n")
+        except Exception as e:
+            print(f"Erreur: {e}\n")
