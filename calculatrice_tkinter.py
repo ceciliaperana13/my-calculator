@@ -1,5 +1,5 @@
 import tkinter as tk
-import re  # nécessaire pour le % amélioré
+import re
 
 # Configuration des couleurs
 COLORS = {
@@ -79,7 +79,7 @@ class Calculator:
         sw, sh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
-    # ---------------- MOTEUR ----------------
+    #  MOTEUR
 
     def _format_number(self, num):
         if num % 1 == 0:
@@ -139,11 +139,14 @@ class Calculator:
                 if t == "+": stack.append(a + b)
                 elif t == "-": stack.append(a - b)
                 elif t == "×": stack.append(a * b)
-                elif t == "÷": stack.append(a / b)
+                elif t == "÷":
+                    if b == 0:
+                        raise ZeroDivisionError
+                    stack.append(a / b)
                 elif t == "^": stack.append(a ** b)
         return self._format_number(stack[0])
 
-    # ---------------- INTERACTIONS ----------------
+    # INTERACTIONS
 
     def button_clicked(self, value):
         if self.display_label.cget("text") == "Erreur" and value != "AC":
@@ -181,6 +184,8 @@ class Calculator:
                     tokens = self._tokenize(self.expression)
                     rpn = self._to_rpn(tokens)
                     value = float(self._evaluate_rpn(rpn))
+                    if value < 0:
+                        raise ValueError("Racine carrée d'un nombre négatif")
                     result = value ** 0.5
                     self.display_label.config(text=self._format_number(result))
                     self.operation_label.config(text=f"√({self.expression})")
@@ -188,25 +193,33 @@ class Calculator:
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    self.expression = ""
 
             case "%":
                 try:
-                    current = float(self.display_label.cget("text"))
-                    percent_value = current / 100
-                    self.display_label.config(text=self._format_number(percent_value))
-                    self.expression = re.sub(r"(\d+(\.\d+)?)(?!.*\d)", str(percent_value), self.expression)
-                    
+                    tokens = self._tokenize(self.expression)
+                    rpn = self._to_rpn(tokens)
+                    value = float(self._evaluate_rpn(rpn))
+                    result = value / 100
+                    self.display_label.config(text=self._format_number(result))
+                    self.expression = str(result)
+                    self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    self.expression = ""
 
             case "+/-":
-                txt = self.display_label.cget("text")
-                if txt.startswith("-"):
-                    txt = txt[1:]
-                else:
-                    txt = "-" + txt
-                self.display_label.config(text=txt)
-                self.expression = txt
+                # On change uniquement le dernier nombre
+                match_num = re.search(r'(\d+\.?\d*|-?\d+\.?\d*)$', self.expression)
+                if match_num:
+                    num = match_num.group(0)
+                    start = match_num.start()
+                    if num.startswith("-"):
+                        num = num[1:]
+                    else:
+                        num = "-" + num
+                    self.expression = self.expression[:start] + num
+                    self.display_label.config(text=num)
 
             case "(" | ")":
                 self.expression += value
@@ -247,5 +260,6 @@ if __name__ == "__main__":
     window = tk.Tk()
     Calculator(window)
     window.mainloop()
+
 
 
