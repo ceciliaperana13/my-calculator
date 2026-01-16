@@ -1,4 +1,5 @@
 import tkinter as tk
+import re  # nécessaire pour le % amélioré
 
 # Configuration des couleurs
 COLORS = {
@@ -78,7 +79,7 @@ class Calculator:
         sw, sh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
-    # ---------------- MOTEUR ----------------
+    #  MOTEUR 
 
     def _format_number(self, num):
         if num % 1 == 0:
@@ -142,7 +143,7 @@ class Calculator:
                 elif t == "^": stack.append(a ** b)
         return self._format_number(stack[0])
 
-    # ---------------- INTERACTIONS ----------------
+    # INTERACTIONS 
 
     def button_clicked(self, value):
         if self.display_label.cget("text") == "Erreur" and value != "AC":
@@ -190,10 +191,11 @@ class Calculator:
 
             case "%":
                 try:
-                    value = float(self.display_label.cget("text")) / 100
-                    value = self._format_number(value)
-                    self.display_label.config(text=value)
-                    self.expression = value
+                    current = float(self.display_label.cget("text"))
+                    percent_value = current / 100
+                    self.display_label.config(text=self._format_number(percent_value))
+                    self.expression = re.sub(r"(\d+(\.\d+)?)(?!.*\d)", str(percent_value), self.expression)
+                    
                 except Exception:
                     self.display_label.config(text="Erreur")
 
