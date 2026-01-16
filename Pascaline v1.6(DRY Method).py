@@ -130,7 +130,7 @@ def leave():
 def main():
     while True:
         # the display of the welcome sentence
-        print("-------------| CALCULATRICE PASCALINE v1.0 |-----------------")
+        print("-------------| CALCULATRICE PASCALINE v1.6 |-----------------")
         print(
             "-------------| Pour quitter taper Q minuscule à la fin de votre calcul |--------------"
         )
@@ -144,7 +144,7 @@ def main():
         nombre2 = user_input("Entrez un chiffre ou nombre :")
         # the loop try, for verify if the variable operation is / and nombre2 is 0,
         # if is that the user need choose an other digit or number
-
+        
         while operation == "/" and nombre2 == 0:
             print("Erreur, 0 n'est pas un diviseur")
             nombre2 = user_input("Entrez un chiffre ou nombre valide :")
@@ -165,7 +165,7 @@ def main():
 
         # It's for stop the loop while with the lower letter q or continue with Enter
         if leave():
-            print("Merci d'avoir utiliser la Calculatrice Pascaline v1.0")
+            print("Merci d'avoir utiliser la Calculatrice Pascaline v1.6")
             # Stop the listener cleanly at the end
             listener.stop()
             break
