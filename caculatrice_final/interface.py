@@ -141,6 +141,14 @@ class Calculator:
                     self.display_label.config(text="Erreur")
                     self.expression = ""
                     self.result_shown = True
+                    
+            case "xʸ":
+                if self.expression and self.expression[-1] in "+-×÷^":
+                    self.expression = self.expression[:-1]
+                self.expression += "^"
+                self.operation_label.config(text=self.expression.replace("^", "xʸ"))
+                self.display_label.config(text="0")
+                self.result_shown = False        
 
             case "%":
                 try:

@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-import re
+
 
 # ============================================
 # CONFIGURATION
@@ -376,13 +376,15 @@ class Calculator:
             case "%":
                 try:
                     current = float(self.display_label.cget("text"))
-                    percent_value = current / 100
-                    self.display_label.config(text=self._format_number(percent_value))
-                    self.expression = re.sub(r"(\d+(\.\d+)?)(?!.*\d)", str(percent_value), self.expression)
-                    
+                    result = self.engine.format_number(current / 100)
+                    self.display_label.config(text=result)
+                    self.expression = result
+                    self.operation_label.config(text=self.expression)
+                    self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
-                    
+                    self.expression = ""
+                    self.result_shown = True
 
             case "+/-":
                 txt = self.display_label.cget("text")
