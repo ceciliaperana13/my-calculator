@@ -1,4 +1,3 @@
-
 import tkinter as tk
 from config import COLORS, BUTTON_LAYOUT, OPERATORS, SPECIAL_FUNCTIONS
 from calcul_engine import CalculEngine
@@ -165,7 +164,11 @@ class Calculator:
                 self.display_label.config(text="0")
 
             case ".":
+                # Vérifier la limite de 10 caractères
                 current = self.display_label.cget("text")
+                if len(current) >= 10:
+                    return
+                
                 if "." not in current:
                     self.display_label.config(text=current + ".")
                     self.expression += "."
@@ -179,6 +182,11 @@ class Calculator:
                     return
 
                 current = self.display_label.cget("text")
+                
+                # LIMITATION À 10 CARACTÈRES
+                if len(current) >= 10 and current != "0":
+                    return  # Bloquer l'ajout si on a déjà 10 caractères
+                
                 if current == "0":
                     self.display_label.config(text=value)
                 else:

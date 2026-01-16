@@ -4,10 +4,20 @@ class CalculEngine:
     
     @staticmethod
     def format_number(num: float) -> str:
-        """Formate un nombre pour l'affichage"""
+        """Formate un nombre pour l'affichage avec limitation à 10 caractères"""
+        # Si c'est un entier
         if num % 1 == 0:
-            return str(int(num))
-        return f"{round(num, 3):.3f}".rstrip("0").rstrip(".")
+            result = str(int(num))
+        else:
+            result = f"{round(num, 3):.3f}".rstrip("0").rstrip(".")
+        
+        # Si le résultat dépasse 10 caractères, utiliser notation scientifique
+        if len(result) > 10:
+            # Notation scientifique avec 3 décimales maximum
+            return f"{num:.3e}"
+        
+        return result
+    
 
     @staticmethod
     def tokenize(expr: str):
@@ -40,7 +50,7 @@ class CalculEngine:
 
     @staticmethod
     def to_rpn(tokens):
-        
+        """Convertit les tokens en notation polonaise inversée (RPN)"""
         priority = {"+": 1, "-": 1, "×": 2, "÷": 2}
         output = []
         stack = []
@@ -73,7 +83,7 @@ class CalculEngine:
 
     @staticmethod
     def evaluate_rpn(rpn):
-       
+        """Évalue une expression en notation polonaise inversée"""
         stack = []
         for t in rpn:
             if t.replace(".", "", 1).lstrip("-").isdigit():
