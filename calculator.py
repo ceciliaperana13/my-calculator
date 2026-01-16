@@ -167,6 +167,7 @@ class HistoriqueManager:
         self.parent_window = parent_window
         self.historique = []
         self.hist_window = None  # Référence à la fenêtre d'historique
+        self.listbox = None  # Référence à la listbox
     
     def sauvegarder(self, expression, resultat):
         """Sauvegarde un calcul dans l'historique"""
@@ -178,6 +179,10 @@ class HistoriqueManager:
         # Limiter à 50 entrées
         if len(self.historique) > 50:
             self.historique = self.historique[-50:]
+        
+        # Mettre à jour l'affichage en temps réel si la fenêtre est ouverte
+        if self.listbox and self.hist_window and self.hist_window.winfo_exists():
+            self.listbox.insert(0, f"{expression} = {resultat}")
     
     def afficher(self):
         """Affiche la fenêtre d'historique (une seule fois)"""
@@ -363,6 +368,10 @@ class Calculator:
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    
+                    # Sauvegarder l'erreur dans l'historique
+                    self.historique.sauvegarder(self.expression, "Erreur")
+                    
                     self.expression = ""
                     self.result_shown = True
 
@@ -376,17 +385,43 @@ class Calculator:
 
             case "√":
                 try:
-                    current = float(self.display_label.cget("text").replace("e", "E"))
+                    # Si une expression est en cours (avec opérateurs), l'évaluer d'abord
+                    if self.expression and any(op in self.expression for op in "+-×÷^"):
+                        current = float(self.engine.evaluer(self.expression))
+                    else:
+                        current = float(self.display_label.cget("text").replace("e", "E"))
+                    
                     if current < 0:
                         raise ValueError
 
                     result = self.engine.format_number(current ** 0.5)
                     self.display_label.config(text=result)
-                    self.operation_label.config(text=f"√({current})")
+                    
+                    # Afficher l'expression originale si elle existe, sinon juste le nombre
+                    if self.expression and any(op in self.expression for op in "+-×÷^"):
+                        display_expr = f"√({self.expression})"
+                    else:
+                        display_expr = f"√({current})"
+                    
+                    self.operation_label.config(text=display_expr)
+                    
+                    # Sauvegarder dans l'historique
+                    self.historique.sauvegarder(display_expr, result)
+                    
                     self.expression = result
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    
+                    # Sauvegarder l'erreur dans l'historique
+                    if self.expression:
+                        display_expr = f"√({self.expression})"
+                    else:
+                        current_val = self.display_label.cget("text")
+                        display_expr = f"√({current_val})"
+                    
+                    self.historique.sauvegarder(display_expr, "Erreur")
+                    
                     self.expression = ""
                     self.result_shown = True
 
@@ -395,11 +430,20 @@ class Calculator:
                     current = float(self.display_label.cget("text").replace("e", "E"))
                     result = self.engine.format_number(current / 100)
                     self.display_label.config(text=result)
+                    
+                    # Sauvegarder dans l'historique
+                    self.historique.sauvegarder(f"{current}%", result)
+                    
                     self.expression = result
                     self.operation_label.config(text=self.expression)
                     self.result_shown = True
                 except Exception:
                     self.display_label.config(text="Erreur")
+                    
+                    # Sauvegarder l'erreur dans l'historique
+                    current_val = self.display_label.cget("text")
+                    self.historique.sauvegarder(f"{current_val}%", "Erreur")
+                    
                     self.expression = ""
                     self.result_shown = True
 
