@@ -1,4 +1,5 @@
 import tkinter as tk
+import re  # nécessaire pour le % amélioré
 
 # Configuration des couleurs
 COLORS = {
@@ -190,10 +191,11 @@ class Calculator:
 
             case "%":
                 try:
-                    value = float(self.display_label.cget("text")) / 100
-                    value = self._format_number(value)
-                    self.display_label.config(text=value)
-                    self.expression = value
+                    current = float(self.display_label.cget("text"))
+                    percent_value = current / 100
+                    self.display_label.config(text=self._format_number(percent_value))
+                    self.expression = re.sub(r"(\d+(\.\d+)?)(?!.*\d)", str(percent_value), self.expression)
+                    
                 except Exception:
                     self.display_label.config(text="Erreur")
 
