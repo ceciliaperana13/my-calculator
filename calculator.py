@@ -2,10 +2,11 @@ import tkinter as tk
 from tkinter import ttk
 
 
-# ============================================
-# CONFIGURATION
-# ============================================
 
+# CONFIGURATION
+
+
+# Colors used in the calculator
 COLORS = {
     "light_gray": "#D4D4D2",
     "black": "#1C1C1C",
@@ -28,69 +29,66 @@ OPERATORS = {"+", "-", "×", "÷", "^"}
 SPECIAL_FUNCTIONS = {"AC", "+/-", "%", "√", "(", ")", "xʸ", "Hist"}
 
 
-# ============================================
-# MOTEUR DE CALCUL
-# ============================================
 
-class CalculEngine:
-    """Moteur de calcul avec évaluation d'expressions"""
-    
+# CALCULATION ENGINE
+
+
+class CalculationEngine:
+
+
     def format_number(self, num):
-        """Formate un nombre pour l'affichage avec notation scientifique si nécessaire"""
-        # Cas spécial: zéro
+        # Number 0
         if num == 0:
             return "0"
         
-        # Si le nombre est trop grand (>= 10 milliards) ou trop petit en valeur absolue
+        # If the number is too large (>= 10 billion) or too small in absolute value
         if abs(num) >= 1e10 or (abs(num) < 1e-3 and num != 0):
-            # Notation scientifique avec max 10 caractères
+            # Max 10 characters
             result = f"{num:.3e}"
-            # Limiter à 10 caractères
+            
             if len(result) > 10:
-                # Réduire la précision
                 for precision in range(2, -1, -1):
                     result = f"{num:.{precision}e}"
                     if len(result) <= 10:
                         break
             return result
         
-        # Si c'est un entier
+        # If it's an integer
         if num % 1 == 0:
             result = str(int(num))
-            # Si la partie entière dépasse 10 chiffres, notation scientifique
+            # If the integer part exceeds 10 digits, use scientific notation
             if len(result) > 10:
                 return f"{num:.3e}"[:10]
             return result
         else:
-            # Nombre décimal normal
-            partie_entiere = int(abs(num))
-            signe = "-" if num < 0 else ""
+            # Normal decimal number
+            integer_part = int(abs(num))
+            sign = "-" if num < 0 else ""
             
-            # Si partie entière > 10 chiffres, notation scientifique
-            if len(str(partie_entiere)) > 10:
+            if len(str(integer_part)) > 10:
                 return f"{num:.3e}"[:10]
             
-            # Formater avec 3 décimales max
+            # Format with a maximum of 3 decimal places
             result = f"{round(num, 3):.3f}".rstrip("0").rstrip(".")
             
-            # Vérifier si ça dépasse 10 caractères
+            # Check if it exceeds 10 characters
             if len(result) > 10:
-                # Réduire les décimales
-                nb_decimales = 3
-                while nb_decimales > 0:
-                    result = f"{num:.{nb_decimales}f}".rstrip("0").rstrip(".")
+                # Reduce decimals
+                num_decimals = 3
+                while num_decimals > 0:
+                    result = f"{num:.{num_decimals}f}".rstrip("0").rstrip(".")
                     if len(result) <= 10:
                         break
-                    nb_decimales -= 1
+                    num_decimals -= 1
                 
-                # Si toujours trop long, notation scientifique
+                # If still too long, use scientific notation
                 if len(result) > 10:
                     result = f"{num:.3e}"[:10]
             
             return result
 
     def _tokenize(self, expr):
-        """Convertit une expression en tokens"""
+        # Tokenize expression
         tokens, number, i = [], "", 0
         while i < len(expr):
             c = expr[i]
@@ -112,7 +110,7 @@ class CalculEngine:
         return tokens
 
     def _to_rpn(self, tokens):
-        """Convertit les tokens en notation polonaise inversée"""
+        # Convert to Reverse Polish Notation
         priority = {"+": 1, "-": 1, "×": 2, "÷": 2, "^": 3}
         output, stack = [], []
 
@@ -135,7 +133,7 @@ class CalculEngine:
         return output
 
     def _evaluate_rpn(self, rpn):
-        """Évalue une expression en notation polonaise inversée"""
+        # Evaluate RPN expression
         stack = []
         for t in rpn:
             if t.replace(".", "", 1).lstrip("-").isdigit():
@@ -149,56 +147,56 @@ class CalculEngine:
                 elif t == "^": stack.append(a ** b)
         return self.format_number(stack[0])
 
-    def evaluer(self, expression):
-        """Évalue une expression mathématique"""
+    def evaluate(self, expression):
+        """Evaluate a mathematical expression"""
         tokens = self._tokenize(expression)
         rpn = self._to_rpn(tokens)
         return self._evaluate_rpn(rpn)
 
 
-# ============================================
-# GESTIONNAIRE D'HISTORIQUE
-# ============================================
 
-class HistoriqueManager:
-    """Gère l'historique des calculs en mémoire"""
+# HISTORY MANAGER
+
+
+class HistoryManager:
+    """Manages the history of calculations in memory"""
     
     def __init__(self, parent_window):
         self.parent_window = parent_window
-        self.historique = []
-        self.hist_window = None  # Référence à la fenêtre d'historique
-        self.listbox = None  # Référence à la listbox
+        self.history = []
+        self.hist_window = None 
+        self.listbox = None  
     
-    def sauvegarder(self, expression, resultat):
-        """Sauvegarde un calcul dans l'historique"""
-        self.historique.append({
+    def save(self, expression, result):
+        """Save calculation to history"""
+        self.history.append({
             "expression": expression,
-            "resultat": resultat
+            "result": result
         })
         
-        # Limiter à 50 entrées
-        if len(self.historique) > 50:
-            self.historique = self.historique[-50:]
+        # Keep only the last 50 entries
+        if len(self.history) > 50:
+            self.history = self.history[-50:]
         
-        # Mettre à jour l'affichage en temps réel si la fenêtre est ouverte
+        # Update the display in real time if the window is open
         if self.listbox and self.hist_window and self.hist_window.winfo_exists():
-            self.listbox.insert(0, f"{expression} = {resultat}")
+            self.listbox.insert(0, f"{expression} = {result}")
     
-    def afficher(self):
-        """Affiche la fenêtre d'historique (une seule fois)"""
-        # Si la fenêtre existe déjà et est ouverte, la mettre en avant
+    def display(self):
+        """Display the history window (only once)"""
+        
         if self.hist_window and self.hist_window.winfo_exists():
             self.hist_window.lift()
             self.hist_window.focus_force()
             return
         
-        # Créer une nouvelle fenêtre
+        # Create new window
         self.hist_window = tk.Toplevel(self.parent_window)
-        self.hist_window.title("Historique")
+        self.hist_window.title("History")
         self.hist_window.geometry("400x550")
         self.hist_window.resizable(False, False)
         
-        # Frame avec scrollbar
+        # Frame with scrollbar
         frame = tk.Frame(self.hist_window)
         frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
@@ -215,19 +213,19 @@ class HistoriqueManager:
         self.listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         scrollbar.config(command=self.listbox.yview)
         
-        # Remplir l'historique (inversé pour avoir le plus récent en haut)
-        for entry in reversed(self.historique):
-            self.listbox.insert(tk.END, f"{entry['expression']} = {entry['resultat']}")
+        # Add history entries
+        for entry in reversed(self.history):
+            self.listbox.insert(tk.END, f"{entry['expression']} = {entry['result']}")
         
-        # Frame pour les boutons
+        # Frame for buttons
         btn_frame = tk.Frame(self.hist_window)
         btn_frame.pack(pady=10)
         
-        # Bouton effacer en bleu
+        # Clear button
         btn_clear = tk.Button(
             btn_frame,
-            text="Effacer l'historique",
-            command=self._effacer_historique,
+            text="Clear History",
+            command=self._clear_history,
             bg=COLORS["blue"],
             fg="white",
             font=("Arial", 12),
@@ -235,10 +233,10 @@ class HistoriqueManager:
         )
         btn_clear.pack(side=tk.LEFT, padx=5)
         
-        # Bouton fermer en rouge
+        # Close button
         btn_close = tk.Button(
             btn_frame,
-            text="Fermer",
+            text="Close",
             command=self.hist_window.destroy,
             bg="#C41E3A",
             fg="white",
@@ -247,27 +245,27 @@ class HistoriqueManager:
         )
         btn_close.pack(side=tk.LEFT, padx=5)
     
-    def _effacer_historique(self):
-        """Efface tout l'historique"""
-        self.historique = []
+    def _clear_history(self):
+        """Clear all history"""
+        self.history = []
         self.listbox.delete(0, tk.END)
 
 
-# ============================================
-# INTERFACE CALCULATRICE
-# ============================================
+
+# CALCULATOR INTERFACE
+
 
 class Calculator:
-    """Interface graphique de la calculatrice"""
+    """Graphical interface of the calculator"""
     
     def __init__(self, window: tk.Tk):
         self.window = window
         self.expression = ""
         self.result_shown = False
         
-        # Initialiser le moteur de calcul et l'historique
-        self.engine = CalculEngine()
-        self.historique = HistoriqueManager(self.window)
+        # Initialize the calculation engine and history
+        self.engine = CalculationEngine()
+        self.history = HistoryManager(self.window)
 
         self._setup_window()
         self._create_display()
@@ -275,14 +273,14 @@ class Calculator:
         self._center_window()
 
     def _setup_window(self):
-        """Configure la fenêtre principale"""
+        """Configure the main window"""
         self.window.title("Calculator")
         self.window.resizable(False, False)
         self.frame = tk.Frame(self.window)
         self.frame.pack()
 
     def _create_display(self):
-        """Crée l'affichage (écran de la calculatrice)"""
+        """Create the display (calculator screen)"""
         self.operation_label = tk.Label(
             self.frame,
             text="",
@@ -304,7 +302,7 @@ class Calculator:
         self.display_label.grid(row=1, column=0, columnspan=4, sticky="we")
 
     def _create_buttons(self):
-        """Crée tous les boutons de la calculatrice"""
+        """Create all calculator buttons"""
         for r, row in enumerate(BUTTON_LAYOUT):
             for c, value in enumerate(row):
                 if value == "":
@@ -318,7 +316,7 @@ class Calculator:
                     command=lambda v=value: self.button_clicked(v)
                 )
 
-                # Style de boutons
+                # Button styling
                 if value == "Hist":
                     btn.config(bg=COLORS["light_gray"], font=("Arial", 20))
                 elif value in SPECIAL_FUNCTIONS:
@@ -331,20 +329,20 @@ class Calculator:
                 btn.grid(row=r + 2, column=c)
 
     def _center_window(self):
-        """Centre la fenêtre sur l'écran"""
+        """Center the window on the screen"""
         self.window.update()
         w, h = self.window.winfo_width(), self.window.winfo_height()
         sw, sh = self.window.winfo_screenwidth(), self.window.winfo_screenheight()
         self.window.geometry(f"{w}x{h}+{(sw-w)//2}+{(sh-h)//2}")
 
     def button_clicked(self, value: str):
-        """Gère les clics sur les boutons"""
-        if self.display_label.cget("text") == "Erreur" and value != "AC":
+        """Handle button clicks"""
+        if self.display_label.cget("text") == "Error" and value != "AC":
             return
 
         match value:
             case "Hist":
-                self.historique.afficher()
+                self.history.display()
 
             case "AC":
                 self.expression = ""
@@ -356,21 +354,21 @@ class Calculator:
                 if not self.expression:
                     return
                 try:
-                    result = self.engine.evaluer(self.expression)
+                    result = self.engine.evaluate(self.expression)
                     
                     self.operation_label.config(text=self.expression + " =")
                     self.display_label.config(text=result)
                     
-                    # Sauvegarder dans l'historique
-                    self.historique.sauvegarder(self.expression, result)
+                    # Save to history
+                    self.history.save(self.expression, result)
                     
                     self.expression = result
                     self.result_shown = True
                 except Exception:
-                    self.display_label.config(text="Erreur")
+                    self.display_label.config(text="Error")
                     
-                    # Sauvegarder l'erreur dans l'historique
-                    self.historique.sauvegarder(self.expression, "Erreur")
+                    # Save error to history
+                    self.history.save(self.expression, "Error")
                     
                     self.expression = ""
                     self.result_shown = True
@@ -385,9 +383,9 @@ class Calculator:
 
             case "√":
                 try:
-                    # Si une expression est en cours (avec opérateurs), l'évaluer d'abord
+                    # If an expression is in progress (with operators), evaluate it first
                     if self.expression and any(op in self.expression for op in "+-×÷^"):
-                        current = float(self.engine.evaluer(self.expression))
+                        current = float(self.engine.evaluate(self.expression))
                     else:
                         current = float(self.display_label.cget("text").replace("e", "E"))
                     
@@ -397,7 +395,7 @@ class Calculator:
                     result = self.engine.format_number(current ** 0.5)
                     self.display_label.config(text=result)
                     
-                    # Afficher l'expression originale si elle existe, sinon juste le nombre
+                    # Display the original expression if it exists, otherwise just the number
                     if self.expression and any(op in self.expression for op in "+-×÷^"):
                         display_expr = f"√({self.expression})"
                     else:
@@ -405,22 +403,22 @@ class Calculator:
                     
                     self.operation_label.config(text=display_expr)
                     
-                    # Sauvegarder dans l'historique
-                    self.historique.sauvegarder(display_expr, result)
+                    # Save to history
+                    self.history.save(display_expr, result)
                     
                     self.expression = result
                     self.result_shown = True
                 except Exception:
-                    self.display_label.config(text="Erreur")
+                    self.display_label.config(text="Error")
                     
-                    # Sauvegarder l'erreur dans l'historique
+                    # Save error to history
                     if self.expression:
                         display_expr = f"√({self.expression})"
                     else:
                         current_val = self.display_label.cget("text")
                         display_expr = f"√({current_val})"
                     
-                    self.historique.sauvegarder(display_expr, "Erreur")
+                    self.history.save(display_expr, "Error")
                     
                     self.expression = ""
                     self.result_shown = True
@@ -431,25 +429,25 @@ class Calculator:
                     result = self.engine.format_number(current / 100)
                     self.display_label.config(text=result)
                     
-                    # Sauvegarder dans l'historique
-                    self.historique.sauvegarder(f"{current}%", result)
+                    # Save to history
+                    self.history.save(f"{current}%", result)
                     
                     self.expression = result
                     self.operation_label.config(text=self.expression)
                     self.result_shown = True
                 except Exception:
-                    self.display_label.config(text="Erreur")
+                    self.display_label.config(text="Error")
                     
-                    # Sauvegarder l'erreur dans l'historique
+                    # Save error to history
                     current_val = self.display_label.cget("text")
-                    self.historique.sauvegarder(f"{current_val}%", "Erreur")
+                    self.history.save(f"{current_val}%", "Error")
                     
                     self.expression = ""
                     self.result_shown = True
 
             case "+/-":
                 txt = self.display_label.cget("text")
-                if txt != "0" and txt != "Erreur":
+                if txt != "0" and txt != "Error":
                     if txt.startswith("-"):
                         txt = txt[1:]
                     else:
@@ -476,11 +474,11 @@ class Calculator:
             case ".":
                 current = self.display_label.cget("text")
                 
-                # Ne pas ajouter de point si en notation scientifique
+                # Don't add decimal point if in scientific notation
                 if "e" in current:
                     return
                 
-                # Vérifier la limite de 10 caractères
+                # Check 10 character limit
                 if len(current) >= 10:
                     return
                 
@@ -492,7 +490,7 @@ class Calculator:
                         self.display_label.config(text=current + ".")
                         self.expression += "."
 
-            case _:  # Chiffres
+            case _:  # Numbers
                 if self.result_shown:
                     self.expression = value
                     self.display_label.config(text=value)
@@ -502,11 +500,11 @@ class Calculator:
 
                 current = self.display_label.cget("text")
                 
-                # Ne pas ajouter de chiffres si en notation scientifique
+                # Don't add digits if in scientific notation
                 if "e" in current:
                     return
                 
-                # LIMITATION À 10 CARACTÈRES
+                # LIMIT TO 10 CHARACTERS
                 if len(current) >= 10 and current != "0":
                     return
                 
@@ -519,9 +517,9 @@ class Calculator:
                 self.operation_label.config(text=self.expression)
 
 
-# ============================================
-# LANCEMENT
-# ============================================
+
+# LAUNCH
+
 
 if __name__ == "__main__":
     window = tk.Tk()
