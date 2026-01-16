@@ -188,6 +188,28 @@ class Calculator:
                 except Exception:
                     self.display_label.config(text="Erreur")
 
+            case "%":
+                try:
+                    value = float(self.display_label.cget("text")) / 100
+                    value = self._format_number(value)
+                    self.display_label.config(text=value)
+                    self.expression = value
+                except Exception:
+                    self.display_label.config(text="Erreur")
+
+            case "+/-":
+                txt = self.display_label.cget("text")
+                if txt.startswith("-"):
+                    txt = txt[1:]
+                else:
+                    txt = "-" + txt
+                self.display_label.config(text=txt)
+                self.expression = txt
+
+            case "(" | ")":
+                self.expression += value
+                self.operation_label.config(text=self.expression)
+
             case "+" | "-" | "×" | "÷":
                 if self.expression and self.expression[-1] in "+-×÷^":
                     self.expression = self.expression[:-1]
@@ -196,13 +218,19 @@ class Calculator:
                 self.operation_label.config(text=self.expression)
 
             case ".":
-                if "." not in self.display_label.cget("text"):
-                    self.display_label.config(text=self.display_label.cget("text") + ".")
-                    self.expression += "."
+                current = self.display_label.cget("text")
+                if "." not in current:
+                    if current == "0":
+                        self.display_label.config(text="0.")
+                        self.expression += "0."
+                    else:
+                        self.display_label.config(text=current + ".")
+                        self.expression += "."
 
             case _:
                 if self.result_shown:
                     self.expression = value
+                    self.display_label.config(text=value)
                     self.result_shown = False
                 else:
                     if self.display_label.cget("text") == "0":
