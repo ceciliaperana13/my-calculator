@@ -36,39 +36,56 @@ class CalculEngine:
     """Moteur de calcul avec évaluation d'expressions"""
     
     def format_number(self, num):
-        """Formate un nombre pour l'affichage avec limitation à 10 chiffres avant virgule et 3 après"""
+        """Formate un nombre pour l'affichage avec notation scientifique si nécessaire"""
+        # Cas spécial: zéro
+        if num == 0:
+            return "0"
+        
+        # Si le nombre est trop grand (>= 10 milliards) ou trop petit en valeur absolue
+        if abs(num) >= 1e10 or (abs(num) < 1e-3 and num != 0):
+            # Notation scientifique avec max 10 caractères
+            result = f"{num:.3e}"
+            # Limiter à 10 caractères
+            if len(result) > 10:
+                # Réduire la précision
+                for precision in range(2, -1, -1):
+                    result = f"{num:.{precision}e}"
+                    if len(result) <= 10:
+                        break
+            return result
+        
         # Si c'est un entier
         if num % 1 == 0:
             result = str(int(num))
-            # Si la partie entière dépasse 10 chiffres, tronquer
+            # Si la partie entière dépasse 10 chiffres, notation scientifique
             if len(result) > 10:
-                return result[:10]
+                return f"{num:.3e}"[:10]
             return result
         else:
-            # Séparer partie entière et décimale
+            # Nombre décimal normal
             partie_entiere = int(abs(num))
             signe = "-" if num < 0 else ""
             
-            # Si partie entière > 10 chiffres, tronquer sans décimales
+            # Si partie entière > 10 chiffres, notation scientifique
             if len(str(partie_entiere)) > 10:
-                return signe + str(partie_entiere)[:10]
+                return f"{num:.3e}"[:10]
             
-            # Sinon, formater avec 3 décimales max
+            # Formater avec 3 décimales max
             result = f"{round(num, 3):.3f}".rstrip("0").rstrip(".")
             
-            # Vérifier si ça dépasse 10 caractères (incluant le point et le signe)
-            if len(result) > 10 + (1 if num < 0 else 0):
+            # Vérifier si ça dépasse 10 caractères
+            if len(result) > 10:
                 # Réduire les décimales
                 nb_decimales = 3
                 while nb_decimales > 0:
                     result = f"{num:.{nb_decimales}f}".rstrip("0").rstrip(".")
-                    if len(result) <= 10 + (1 if num < 0 else 0):
+                    if len(result) <= 10:
                         break
                     nb_decimales -= 1
                 
-                # Si toujours trop long, tronquer la partie entière
-                if len(result) > 10 + (1 if num < 0 else 0):
-                    result = signe + str(partie_entiere)[:10]
+                # Si toujours trop long, notation scientifique
+                if len(result) > 10:
+                    result = f"{num:.3e}"[:10]
             
             return result
 
@@ -359,7 +376,7 @@ class Calculator:
 
             case "√":
                 try:
-                    current = float(self.display_label.cget("text"))
+                    current = float(self.display_label.cget("text").replace("e", "E"))
                     if current < 0:
                         raise ValueError
 
@@ -375,7 +392,7 @@ class Calculator:
 
             case "%":
                 try:
-                    current = float(self.display_label.cget("text"))
+                    current = float(self.display_label.cget("text").replace("e", "E"))
                     result = self.engine.format_number(current / 100)
                     self.display_label.config(text=result)
                     self.expression = result
@@ -415,6 +432,10 @@ class Calculator:
             case ".":
                 current = self.display_label.cget("text")
                 
+                # Ne pas ajouter de point si en notation scientifique
+                if "e" in current:
+                    return
+                
                 # Vérifier la limite de 10 caractères
                 if len(current) >= 10:
                     return
@@ -436,6 +457,10 @@ class Calculator:
                     return
 
                 current = self.display_label.cget("text")
+                
+                # Ne pas ajouter de chiffres si en notation scientifique
+                if "e" in current:
+                    return
                 
                 # LIMITATION À 10 CARACTÈRES
                 if len(current) >= 10 and current != "0":
